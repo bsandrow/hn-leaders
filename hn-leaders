@@ -1,0 +1,69 @@
+#!/usr/bin/env python
+
+import argparse
+import base64
+import datetime
+import os
+import urlparse
+
+import requests
+import lxml.html
+
+parser = argparse.ArgumentParser(description="HN leaderboard archiver.")
+parser.add_argument('-d', '--dir', action='store', default=os.getcwd(),
+                    help="Directory to store file in")
+parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
+parser.add_argument('-f', '--format', action='store', default="Hacker News - Leaders - %Y-%m-%d %H:%M.html",
+                    help='Format for the filename. This is passed through strftime, so the usual time format characters apply')
+options = parser.parse_args()
+
+leaders_url = 'https://news.ycombinator.com/leaders'
+
+def msg(msg):
+    if options.verbose:
+        print msg
+
+msg("Downloading...")
+response = requests.get(leaders_url)
+
+msg("Parsing...")
+root = lxml.html.fromstring(response.text)
+#root = tree.getroot()
+
+def get_data_uri(url):
+    response = requests.get(url)
+    mime_type = response.headers['Content-Type']
+
+    # TODO figure out if I need to do anything if charset isn't set. Can I
+    #      always presume that it's us-ascii? Would assuming utf-8 be a better
+    #      default?
+    #
+    # (mime_type, d, charset) = response.headers['Content-Type'].partition(';')
+    #if mime_type.startswith('text/') and charset is None:
+    #    charset = %SOMETHING%
+
+    return "data:%s;base64,%s" % (mime_type, base64.encodestring(response.content).replace("\n", ""))
+
+msg("Serializing resources...")
+for image in root.xpath('//img'):
+    if image.get('src') and not image.get('src').startswith('data:'):
+        resource_url = urlparse.urljoin(leaders_url, image.get('src'))
+        image.set('src', get_data_uri(resource_url))
+
+for link in root.xpath('//link'):
+    if link.get('href') and not link.get('href').startswith('data:'):
+        resource_url = urlparse.urljoin(leaders_url, link.get('href'))
+        link.set('href', get_data_uri(resource_url))
+
+msg("Writing file...")
+timestamp = datetime.datetime.now()
+path = os.path.join(options.dir, timestamp.strftime(options.format))
+
+# Note: The user can supply a path in the format, so we may need to create some
+#       directories.
+directory = os.path.dirname(path)
+if not os.path.isdir(directory):
+    os.makedirs(directory)
+
+with open(path, 'wb') as fh:
+    fh.write(lxml.html.tostring(root))
