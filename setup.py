@@ -17,13 +17,11 @@ config = {
     'author_email'    : 'brandon@sandrowicz.org',
     'url'             : 'https://github.com/bsandrow/hn-leaders',
     'version'         : '0.1',
-    'packages'        : [''],
-    'package_data'    : { '': ['LICENSE'] },
-    'scripts'         : 'hn-leaders',
+    'scripts'         : [ 'hn-leaders' ],
     'install_requires': requires,
     'license'         : open('LICENSE').read(),
     'test_suite'      : '',
-    'classifiers'     : (,
+    'classifiers'     : tuple(
     ),
 }
 
