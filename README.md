@@ -5,11 +5,9 @@ script inlines all external resources using data URIs.
 
 ## Purpose
 
-I whipped this together to throw on cron because I noticed that sometimes the
-leaderboard fluctuated wildly between page refreshes. Often people in the
-middle of the leaderboard would just disappear from the list to reappear 20
-minutes later. The point was to scrape the site for a while, and maybe analyze
-the results later.
+I whipped this together to throw on cron because I noticed that some of the
+entries in the middle of the list would disappear and reappear from the list.
+The point was to scrape the site for a while and analyze the results.
 
 ## Usage
 
